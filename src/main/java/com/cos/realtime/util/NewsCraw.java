@@ -1,8 +1,11 @@
 package com.cos.realtime.util;
 
 import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.jsoup.Jsoup;
@@ -13,18 +16,22 @@ import org.springframework.web.client.RestTemplate;
 
 import com.cos.realtime.domain.News;
 
+import ch.qos.logback.core.recovery.ResilientSyslogOutputStream;
+
 @Component
 public class NewsCraw {
 
-	int aidNum = 1;
-	
-	public List<News> newsCollect() {
+	private int aidNum = 277493;
+	//https://news.naver.com/main/read.naver?mode=LSD&mid=shm&sid1=103&oid=437&aid=0000277493
+	public List<News> newsCollect() throws ParseException {
 		RestTemplate rt = new RestTemplate();
 		List<News> newsList =new ArrayList<>();
+		
+	try {
 	
-	for (int i = 1; i <6; i++) {
+		for (int i = 1; i <100; i++) {
 		String aid = String.format("%010d", aidNum);
-		String url = "https://news.naver.com/main/read.naver?mode=LSD&mid=shm&sid1=102&oid=022&aid="+aid;
+		String url = "https://news.naver.com/main/read.naver?mode=LSD&mid=shm&sid1=103&oid=437&aid="+aid;
 		String html = rt.getForObject(url,String.class);
 		
 		Document doc = Jsoup.parse(html);
@@ -41,34 +48,46 @@ public class NewsCraw {
 		String date = createdAt.substring(0, 10);
 		date = date.replace(".", "-");
 		String date2 = date + " 00:00:00";
-		Timestamp newsdate = Timestamp.valueOf(date2);
+		SimpleDateFormat date3 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		Date newsDate = date3.parse(date2);
 
 		
-		LocalDateTime t = LocalDateTime.now().minusDays(1).plusHours(9);;
-		Timestamp ts = Timestamp.valueOf(t);
+//		LocalDateTime t = LocalDateTime.now().minusDays(1).plusHours(9);;
+//		Timestamp ts = Timestamp.valueOf(t);
 		
 		
-		
-//		int compare = ts.compareTo(newsdate);
-//		
-//		if (compare > 0) {
-//			System.out.println("ts>newsdate");
-//			System.out.println(company);
-//			System.out.println(title);
-//			System.out.println(newsdate);
-//			
-//		} 
+		Date today = new Date();
+		SimpleDateFormat todayFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		String crawStart = todayFormat.format(today);
+		SimpleDateFormat crawTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		Date startTime = crawTime.parse(crawStart);
 		
 		
-		News news = News.builder()
-				.company(company)
-				.title(title)
-				.createdAt(newsdate)
-				.build();
-
-		newsList.add(news);
+		int compare = startTime.compareTo(newsDate);
 		
-		aidNum ++;
+		if (compare > 0) {
+			System.out.println("ts>newsdate");
+			System.out.println(company);
+			System.out.println(title);
+			System.out.println("뉴스시간: "+newsDate);
+			System.out.println("현재시간: "+startTime);
+			
+			
+			News news = News.builder()
+					.company(company)
+					.title(title)
+					.createdAt(newsDate)
+					.build();
+			
+			newsList.add(news);
+			
+			aidNum ++;
+		} 
+		
+	}
+	} catch (Exception e) {
+		this.aidNum = aidNum;
+		
 	}
 	return newsList;
 	

@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.repository.Tailable;
 import reactor.core.publisher.Flux;
 
 public interface NewsReactRepository extends ReactiveMongoRepository <News, String> {
-	//@Tailable 
+	@Tailable 
 	@Query("{}")
 	Flux<News> mFindAll();
 	

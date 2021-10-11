@@ -1,5 +1,6 @@
 package com.cos.realtime.batch;
 
+import java.text.ParseException;
 import java.util.List;
 
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,13 +23,17 @@ public class NewsBatch {
 	private final NewsCraw newsCraw;
 	
 	
-	@Scheduled(fixedDelay=1000*60*1)
+	@Scheduled(cron="0 0 1 * * ?")
 	public void newsCrawStart() {
-		List<News> newsList = newsCraw.newsCollect();
+		List<News> newsList;
+		try {
+			newsList = newsCraw.newsCollect();
+			newsRepository.saveAll(newsList);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
 		 
-		System.out.println();
-		newsRepository.saveAll(newsList);
-		System.out.println(newsList);
+		
 		System.out.println("실행됨");
 		
 	}
